@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"chat_service/internal/domain"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -41,4 +42,8 @@ func (cm *ClientManager) Broadcast(message []byte) {
 			delete(cm.clients, conn)
 		}
 	}
+}
+
+func (cm *ClientManager) GetBroadcaster() domain.Broadcaster {
+	return cm
 }

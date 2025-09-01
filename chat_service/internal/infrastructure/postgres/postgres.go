@@ -15,12 +15,29 @@ func NewDB(db *sql.DB) *Database {
 }
 
 func (db *Database) SendMessage(message domain.Message) (domain.Message, error) {
-	query := `INSERT INTO messages (user_id, content) VALUES ($1, $2) RETURNING id, created_at;`
+	query := `INSERT INTO messages (user_id, user_name, role, is_anon, content)
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING id, created_at;`
+
 	var msg domain.Message
-	err := db.DB.QueryRow(query, message.UserID, message.Content).Scan(&msg.ID, &msg.Created_at)
+	err := db.DB.QueryRow(
+		query,
+		message.UserID,
+		message.UserName,
+		message.Role,
+		message.IsAnon,
+		message.Content,
+	).Scan(&msg.ID, &msg.CreatedAt)
+
 	if err != nil {
-		return domain.Message{}, errors.New("Failed to send message")
+		return domain.Message{}, errors.New("failed to send message")
 	}
+
+	msg.UserID = message.UserID
+	msg.UserName = message.UserName
+	msg.Role = message.Role
+	msg.IsAnon = message.IsAnon
+	msg.Content = message.Content
 
 	msg.UserID = message.UserID
 	msg.Content = message.Content
@@ -38,11 +55,10 @@ func (db *Database) DeleteMessage(id int64) error {
 }
 
 func (db *Database) GetMessages(limit, offset int) ([]domain.Message, error) {
-	query := `SELECT id, user_id, content, created_at FROM messages
-			  ORDER BY created_at DESC
-			  LIMIT $1
-			  OFFSET $2;
-			  `
+	query := `SELECT id, user_id, user_name, role, is_anon, content, created_at
+          FROM messages
+          ORDER BY created_at DESC
+          LIMIT $1 OFFSET $2;`
 
 	rows, err := db.DB.Query(query, limit, offset)
 	if err != nil {
@@ -54,7 +70,7 @@ func (db *Database) GetMessages(limit, offset int) ([]domain.Message, error) {
 	for rows.Next() {
 		var msg domain.Message
 
-		err := rows.Scan(&msg.ID, &msg.UserID, &msg.Content, &msg.Created_at)
+		err := rows.Scan(&msg.ID, &msg.UserID, &msg.UserName, &msg.Role, &msg.IsAnon, &msg.Content, &msg.CreatedAt)
 		if err != nil {
 			return nil, err
 		}

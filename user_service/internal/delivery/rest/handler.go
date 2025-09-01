@@ -80,6 +80,16 @@ func (h *HTTPHandler) LoginHandler(c *gin.Context) {
 	c.JSON(200, token)
 }
 
+func (h *HTTPHandler) LoginAnonHandler(c *gin.Context) {
+	token, err := h.usecase.LoginAnonUser()
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	c.JSON(200, token)
+}
+
 func (h *HTTPHandler) RefreshTokenHandler(c *gin.Context) {
 	var req struct {
 		RefreshToken string `json:"refresh_token"`

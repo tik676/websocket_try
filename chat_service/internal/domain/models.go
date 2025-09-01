@@ -10,14 +10,21 @@ type User struct {
 }
 
 type Message struct {
-	ID         int64     `json:"id"`
-	UserID     int64     `json:"user_id"`
-	Content    string    `json:"content"`
-	Created_at time.Time `json:"created_at"`
+	ID        int64     `json:"id"`
+	UserID    int64     `json:"user_id"`
+	UserName  string    `json:"user_name"`
+	Role      string    `json:"role"`
+	IsAnon    bool      `json:"is_anon"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type MessageRepository interface {
 	SendMessage(msg Message) (Message, error)
 	DeleteMessage(id int64) error
 	GetMessages(limit, offset int) ([]Message, error)
+}
+
+type Broadcaster interface {
+	Broadcast(message []byte)
 }

@@ -1,5 +1,43 @@
 version: "3.8"
+
 services:
+  db-userservice:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dbName
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dbName"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - db_data_user_service:/var/lib/postgresql/data
+    networks:
+      - user_network # ждём healthcheck перед миграциями
+
+  migrate-userservice:
+    image: migrate/migrate
+    depends_on:
+      db-userservice:
+        condition: service_healthy
+    volumes:
+      - ./user_service/migration:/migrations
+    command:
+      - "-path"
+      - "/migrations"
+      - "-database"
+      - "postgres://postgres:postgres@db-userservice:5432/dbName?sslmode=disable"
+      - "up"
+    restart: "no"
+    networks:
+      - user_network # одноразовый job, должен выйти с кодом 0
+
   backend-userservice:
     build:
       context: ./user_service
@@ -12,43 +50,10 @@ services:
     depends_on:
       db-userservice:
         condition: service_healthy
+      migrate-userservice:
+        condition: service_completed_successfully
     networks:
-      - user_network
-
-  db-userservice:
-    image: postgres:15-alpine
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: dbName
-    ports:
-      - "5433:5432"
-    volumes:
-      - db_data_user_service:/var/lib/postgresql/data
-      - ./user_service/internal/migration:/docker-entrypoint-initdb.d  
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - user_network
-
-  backend-chatservice:
-    build: 
-      context: ./chat_service
-      dockerfile: Dockerfile
-    env_file:
-      - ./chat_service/.env
-    ports:
-      - "8082:8080"
-    depends_on:
-      db-chatservice:
-        condition: service_healthy
-    networks:
-      - user_network 
+      - user_network # стартует после успешных миграций
 
   db-chatservice:
     image: postgres:15-alpine
@@ -59,17 +64,49 @@ services:
       POSTGRES_DB: dbName
     ports:
       - "5434:5432"
-    volumes:
-      - db_data_chat_service:/var/lib/postgresql/data
-      - ./chat_service/internal/infrastructure/migration:/docker-entrypoint-initdb.d  
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dbName"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    volumes:
+      - db_data_chat_service:/var/lib/postgresql/data
     networks:
-      - user_network
+      - user_network # такой же healthcheck
+
+  migrate-chatservice:
+    image: migrate/migrate
+    depends_on:
+      db-chatservice:
+        condition: service_healthy
+    volumes:
+      - ./chat_service/migration:/migrations
+    command:
+      - "-path"
+      - "/migrations"
+      - "-database"
+      - "postgres://postgres:postgres@db-chatservice:5432/dbName?sslmode=disable"
+      - "up"
+    restart: "no"
+    networks:
+      - user_network # job для chat_service
+
+  backend-chatservice:
+    build:
+      context: ./chat_service
+      dockerfile: Dockerfile
+    env_file:
+      - ./chat_service/.env
+    ports:
+      - "8082:8080"
+    depends_on:
+      db-chatservice:
+        condition: service_healthy
+      migrate-chatservice:
+        condition: service_completed_successfully
+    networks:
+      - user_network # ждёт миграции
 
 volumes:
   db_data_user_service:

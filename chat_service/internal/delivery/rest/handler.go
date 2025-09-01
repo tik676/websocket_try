@@ -40,31 +40,12 @@ func (h *HTTPRepository) GetMessagesHandler(c *gin.Context) {
 }
 
 func (h *HTTPRepository) PostMessageHandler(c *gin.Context) {
-	var user domain.User
-
-	userIDRaw, _ := c.Get("user_id")
-	nameRaw, _ := c.Get("name")
-	roleRaw, _ := c.Get("role")
-
-	userID, ok := userIDRaw.(int64)
-	if !ok {
-		userID = 0
+	user := domain.User{
+		ID:     c.GetInt64("user_id"),
+		Name:   c.GetString("name"),
+		Role:   c.GetString("role"),
+		IsAnon: c.GetInt64("user_id") == 0,
 	}
-
-	name, ok := nameRaw.(string)
-	if !ok {
-		name = "Аноним"
-	}
-
-	role, ok := roleRaw.(string)
-	if !ok {
-		role = "anonym"
-	}
-
-	user.ID = userID
-	user.Name = name
-	user.Role = role
-	user.IsAnon = (userID == 0)
 
 	var req struct {
 		Content string `json:"content"`
@@ -81,7 +62,8 @@ func (h *HTTPRepository) PostMessageHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": msg})
+	c.JSON(http.StatusOK, msg)
+
 }
 
 func (h *HTTPRepository) DeleteMessageHandler(c *gin.Context) {

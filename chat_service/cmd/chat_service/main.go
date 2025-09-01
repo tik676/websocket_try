@@ -2,6 +2,7 @@ package main
 
 import (
 	"chat_service/internal/delivery/router"
+	websocket "chat_service/internal/delivery/webSocket"
 	"chat_service/internal/infrastructure/postgres"
 	"chat_service/internal/middleware"
 	"chat_service/internal/usecase"
@@ -35,8 +36,9 @@ func main() {
 	}
 	log.Println("Successfully connected to database")
 
+	cm := websocket.NewClientManager()
 	postgresRepo := postgres.NewDB(db)
-	usecase := usecase.NewUseCase(postgresRepo)
+	usecase := usecase.NewUseCase(postgresRepo, cm.GetBroadcaster())
 	jwtKey := middleware.NewJWTMaker(os.Getenv("JWT_SECRET"))
 
 	router := router.SetupRouter(usecase, jwtKey)

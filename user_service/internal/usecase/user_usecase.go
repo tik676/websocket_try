@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"user_service/internal/domain"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -24,6 +26,7 @@ func (u *UseCase) RegisterUser(name, password string) (*domain.User, error) {
 	user, err := u.repo.Register(domain.AuthorizationInput{
 		Name:     name,
 		Password: string(hashPassword),
+		Role:     "user",
 	})
 
 	if err != nil {
@@ -45,6 +48,28 @@ func (u *UseCase) LoginUser(name, password string) (*domain.Token, error) {
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		return nil, errors.New("invalid password")
+	}
+
+	token, err := u.repoToken.CreateToken(user.ID, user.Name, user.Role)
+	if err != nil {
+		return nil, errors.New("failed to create token")
+	}
+
+	return token, nil
+}
+
+func (u *UseCase) LoginAnonUser() (*domain.Token, error) {
+	anonName := fmt.Sprintf("anon_%s", uuid.New().String())
+
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(uuid.New().String()), bcrypt.DefaultCost)
+
+	user, err := u.repo.Register(domain.AuthorizationInput{
+		Name:     anonName,
+		Password: string(hashPassword),
+		Role:     "anon",
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	token, err := u.repoToken.CreateToken(user.ID, user.Name, user.Role)

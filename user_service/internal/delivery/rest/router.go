@@ -27,6 +27,7 @@ func SetupRouter(usecase *usecase.UseCase, tokenManager domain.TokenManager) *gi
 	middleware := middleware.NewAuthMiddleware(tokenManager)
 
 	r.POST("/register", handler.RegisterHandler)
+	r.POST("/login/anon", handler.LoginAnonHandler)
 	r.POST("/login", handler.LoginHandler)
 	r.POST("/refresh", handler.RefreshTokenHandler)
 	r.POST("/logout", handler.LogoutHandler)
