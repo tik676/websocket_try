@@ -25,6 +25,10 @@ type MessageRepository interface {
 	DeleteMessage(id int64) error
 }
 
+type TokenManager interface {
+	VerifyToken(token string) (userID int64, name, role string, err error)
+}
+
 type Broadcaster interface {
 	Broadcast(msg []byte)
 }

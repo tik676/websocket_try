@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o main ./cmd/chat_service/main.go
+RUN go build -o main ./cmd/main.go
 
 EXPOSE 8080
 

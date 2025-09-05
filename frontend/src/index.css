@@ -1,6 +1,0 @@
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f0f0; }
-.auth-container, .chat-container { width: 400px; margin: 50px auto; padding: 20px; background: white; border-radius: 8px; }
-input { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
-button { padding: 8px 16px; margin: 5px 0; cursor: pointer; }
-.messages { max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-p { color: blue; cursor: pointer; text-decoration: underline; }

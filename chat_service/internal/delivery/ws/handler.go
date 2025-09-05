@@ -76,6 +76,8 @@ func (ws *WsHandler) HandleWS(c *gin.Context) {
 				break
 			}
 
+			msg = domain.Message{}
+
 			if saveMsg, err := ws.uc.SendMessage(msg); err == nil {
 				ws.broadcast <- &saveMsg
 

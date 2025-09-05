@@ -19,7 +19,7 @@ services:
     volumes:
       - db_data_user_service:/var/lib/postgresql/data
     networks:
-      - user_network # ждём healthcheck перед миграциями
+      - user_network 
 
   migrate-userservice:
     image: migrate/migrate
@@ -36,7 +36,7 @@ services:
       - "up"
     restart: "no"
     networks:
-      - user_network # одноразовый job, должен выйти с кодом 0
+      - user_network 
 
   backend-userservice:
     build:
@@ -53,7 +53,7 @@ services:
       migrate-userservice:
         condition: service_completed_successfully
     networks:
-      - user_network # стартует после успешных миграций
+      - user_network 
 
   db-chatservice:
     image: postgres:15-alpine
@@ -73,7 +73,7 @@ services:
     volumes:
       - db_data_chat_service:/var/lib/postgresql/data
     networks:
-      - user_network # такой же healthcheck
+      - user_network 
 
   migrate-chatservice:
     image: migrate/migrate
@@ -90,7 +90,7 @@ services:
       - "up"
     restart: "no"
     networks:
-      - user_network # job для chat_service
+      - user_network 
 
   backend-chatservice:
     build:
@@ -106,7 +106,7 @@ services:
       migrate-chatservice:
         condition: service_completed_successfully
     networks:
-      - user_network # ждёт миграции
+      - user_network 
 
 volumes:
   db_data_user_service:

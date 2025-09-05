@@ -16,7 +16,7 @@ func NewDBrepo(db *sql.DB) *DBrepo {
 }
 
 func (db *DBrepo) SaveMessage(msg domain.Message) (domain.Message, error) {
-	query := `INSERT INTO messages(user_id,username,content,role) 
+	query := `INSERT INTO messages(user_id,user_name,content,role) 
 	VALUES($1,$2,$3,$4)
 	RETURNING id,created_at
 	`
@@ -29,7 +29,7 @@ func (db *DBrepo) SaveMessage(msg domain.Message) (domain.Message, error) {
 
 func (db *DBrepo) MessageHistory(limit, offset int64) ([]domain.Message, error) {
 	query := `
-	SELECT id, user_id, username, content, created_at, role, is_anon
+	SELECT id, user_id, user_name, content, created_at, role, is_anon
 	FROM messages
 	ORDER BY created_at DESC
 	LIMIT $1 OFFSET $2
