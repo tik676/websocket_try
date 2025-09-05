@@ -12,19 +12,19 @@ type User struct {
 type Message struct {
 	ID        int64     `json:"id"`
 	UserID    int64     `json:"user_id"`
-	UserName  string    `json:"user_name"`
-	Role      string    `json:"role"`
-	IsAnon    bool      `json:"is_anon"`
+	Username  string    `json:"username"`
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
+	Role      string    `json:"role"`
+	IsAnon    bool      `json:"is_anon"`
 }
 
 type MessageRepository interface {
-	SendMessage(msg Message) (Message, error)
+	SaveMessage(msg Message) (Message, error)
+	MessageHistory(limit, offset int64) ([]Message, error)
 	DeleteMessage(id int64) error
-	GetMessages(limit, offset int) ([]Message, error)
 }
 
 type Broadcaster interface {
-	Broadcast(message []byte)
+	Broadcast(msg []byte)
 }

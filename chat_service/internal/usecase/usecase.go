@@ -2,56 +2,40 @@ package usecase
 
 import (
 	"chat_service/internal/domain"
-	"encoding/json"
-	"errors"
-	"time"
+	"fmt"
+	"log"
 )
 
 type UseCase struct {
-	repo        domain.MessageRepository
-	broadcaster domain.Broadcaster
+	repo      domain.MessageRepository
+	broadcast domain.Broadcaster
 }
 
-func NewUseCase(repo domain.MessageRepository, b domain.Broadcaster) *UseCase {
-	return &UseCase{
-		repo:        repo,
-		broadcaster: b,
-	}
+func NewUseCase(repo domain.MessageRepository, broadcast domain.Broadcaster) *UseCase {
+	return &UseCase{repo: repo, broadcast: broadcast}
 }
 
-func (uc *UseCase) SendMessage(user domain.User, content string) (domain.Message, error) {
-	if content == "" {
-		return domain.Message{}, errors.New("message content cannot be empty")
+func (uc *UseCase) SendMessage(msg domain.Message) (domain.Message, error) {
+	if msg.Content == "" {
+		return domain.Message{}, fmt.Errorf("error message can't be empty")
+	}
+	if msg.UserID == 0 {
+		return domain.Message{}, fmt.Errorf("user id cannot be zero")
+	}
+	if msg.Role == "anon" {
+		msg.IsAnon = true
 	}
 
-	msg := domain.Message{
-		UserID:    user.ID,
-		UserName:  user.Name,
-		Role:      user.Role,
-		IsAnon:    user.IsAnon,
-		Content:   content,
-		CreatedAt: time.Now(),
-	}
-
-	saveMsg, err := uc.repo.SendMessage(msg)
+	saveMsg, err := uc.repo.SaveMessage(msg)
 	if err != nil {
-		return domain.Message{}, err
-	}
-
-	if uc.broadcaster != nil {
-		msgJSON, _ := json.Marshal(saveMsg)
-		uc.broadcaster.Broadcast(msgJSON)
+		log.Printf("Failed to send message:%v", err)
 	}
 
 	return saveMsg, nil
 }
 
-func (uc *UseCase) DeleteMessage(id int64) error {
-	return uc.repo.DeleteMessage(id)
-}
-
-func (uc *UseCase) GetMessages(limit, offset int) ([]domain.Message, error) {
-	if limit <= 0 || limit > 100 {
+func (uc *UseCase) GetMessages(limit, offset int64) ([]domain.Message, error) {
+	if limit <= 0 {
 		limit = 50
 	}
 
@@ -59,5 +43,9 @@ func (uc *UseCase) GetMessages(limit, offset int) ([]domain.Message, error) {
 		offset = 0
 	}
 
-	return uc.repo.GetMessages(limit, offset)
+	return uc.repo.MessageHistory(limit, offset)
+}
+
+func (uc *UseCase) DeleteMessage(id int64) error {
+	return uc.repo.DeleteMessage(id)
 }
