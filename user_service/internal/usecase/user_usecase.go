@@ -3,9 +3,9 @@ package usecase
 import (
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"user_service/internal/domain"
 
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -26,7 +26,6 @@ func (u *UseCase) RegisterUser(name, password string) (*domain.User, error) {
 	user, err := u.repo.Register(domain.AuthorizationInput{
 		Name:     name,
 		Password: string(hashPassword),
-		Role:     "user",
 	})
 
 	if err != nil {
@@ -59,17 +58,13 @@ func (u *UseCase) LoginUser(name, password string) (*domain.Token, error) {
 }
 
 func (u *UseCase) LoginAnonUser() (*domain.Token, error) {
-	anonName := fmt.Sprintf("anon_%s", uuid.New().String())
+	anonID := rand.Int64()
+	anonName := fmt.Sprintf("anon_%v", anonID)
 
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(uuid.New().String()), bcrypt.DefaultCost)
-
-	user, err := u.repo.Register(domain.AuthorizationInput{
-		Name:     anonName,
-		Password: string(hashPassword),
-		Role:     "anon",
-	})
-	if err != nil {
-		return nil, err
+	user := &domain.User{
+		ID:   anonID,
+		Name: anonName,
+		Role: "anon",
 	}
 
 	token, err := u.repoToken.CreateToken(user.ID, user.Name, user.Role)
