@@ -60,7 +60,7 @@ func (db *DBrepo) DeleteMessage(id int64) error {
 	query := `DELETE FROM messages WHERE id = $1;`
 	_, err := db.DB.Exec(query, id)
 	if err != nil {
-		log.Println("message not found:%v", err)
+		log.Println("message not found")
 		return err
 	}
 

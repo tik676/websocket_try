@@ -58,6 +58,10 @@ func (ws *WsHandler) HandleWS(c *gin.Context) {
 		return
 	}
 
+	userID := c.GetInt64("user_id")
+	username := c.GetString("name")
+	role := c.GetString("role")
+
 	ws.mu.Lock()
 	ws.clients[conn] = true
 	ws.mu.Unlock()
@@ -70,15 +74,20 @@ func (ws *WsHandler) HandleWS(c *gin.Context) {
 			conn.Close()
 		}()
 		for {
-			var msg domain.Message
-			if err := conn.ReadJSON(&msg); err != nil {
+
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
 				log.Printf("read error: %v", err)
-				break
+				return
+			}
+			message := domain.Message{
+				UserID:   userID,
+				Username: username,
+				Content:  string(msg),
+				Role:     role,
 			}
 
-			msg = domain.Message{}
-
-			if saveMsg, err := ws.uc.SendMessage(msg); err == nil {
+			if saveMsg, err := ws.uc.SendMessage(message); err == nil {
 				ws.broadcast <- &saveMsg
 
 			}

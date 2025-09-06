@@ -45,3 +45,28 @@ func (m *MiddlewareRepo) RequireAuth() gin.HandlerFunc {
 	}
 
 }
+
+func (m *MiddlewareRepo) RequireAuthWS() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString := c.Query("token")
+
+		if tokenString == "" {
+			c.JSON(401, gin.H{"error": "Authorization token required"})
+			c.Abort()
+			return
+		}
+
+		userID, name, role, err := m.repoToken.VerifyToken(tokenString)
+		if err != nil {
+			c.JSON(401, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		c.Set("user_id", userID)
+		c.Set("name", name)
+		c.Set("role", role)
+
+		c.Next()
+	}
+}

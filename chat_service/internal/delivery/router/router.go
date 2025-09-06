@@ -31,7 +31,7 @@ func SetupRouter(uc *usecase.UseCase, token *infrastructure.JWTmaker) *gin.Engin
 
 	wsHandler := ws.NewWsHandler(uc, upgrader)
 
-	r.GET("/ws", wsHandler.HandleWS)
+	r.GET("/ws", middleware.RequireAuthWS(), wsHandler.HandleWS)
 
 	return r
 }
