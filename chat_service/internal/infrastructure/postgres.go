@@ -39,7 +39,11 @@ func (db *DBrepo) MessageHistory(limit, offset int64) ([]domain.Message, error) 
 	if err != nil {
 		return []domain.Message{}, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("Error closing rows: %v", err)
+		}
+	}()
 
 	var messages []domain.Message
 	for rows.Next() {

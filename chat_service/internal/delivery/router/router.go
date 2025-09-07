@@ -6,13 +6,11 @@ import (
 	"chat_service/internal/delivery/ws"
 	"chat_service/internal/infrastructure"
 	"chat_service/internal/usecase"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 )
 
-func SetupRouter(uc *usecase.UseCase, token *infrastructure.JWTmaker) *gin.Engine {
+func SetupRouter(uc *usecase.UseCase, token *infrastructure.JWTmaker, ws *ws.WsHandler) *gin.Engine {
 	r := gin.Default()
 
 	httpRepo := rest.NewHTTPHandler(uc)
@@ -25,13 +23,7 @@ func SetupRouter(uc *usecase.UseCase, token *infrastructure.JWTmaker) *gin.Engin
 		protected.DELETE("/messages", httpRepo.DeleteMessage)
 	}
 
-	upgrader := &websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },
-	}
-
-	wsHandler := ws.NewWsHandler(uc, upgrader)
-
-	r.GET("/ws", middleware.RequireAuthWS(), wsHandler.HandleWS)
+	r.GET("/ws", middleware.RequireAuthWS(), ws.HandleWS)
 
 	return r
 }

@@ -42,14 +42,14 @@ func (h *HTTPHandler) GetMessages(c *gin.Context) {
 
 func (h *HTTPHandler) DeleteMessage(c *gin.Context) {
 	var req struct {
-		id int64 `json:"id"`
+		ID int64 `json:"id"`
 	}
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": "invalid id"})
 		return
 	}
 
-	if err := h.uc.DeleteMessage(req.id); err != nil {
+	if err := h.uc.DeleteMessage(req.ID); err != nil {
 		c.JSON(400, gin.H{"error": "Failed to delete message"})
 		return
 	}

@@ -30,7 +30,7 @@ func (jm *JWTmaker) VerifyToken(tokenString string) (userID int64, name, role st
 		userID = int64(claims["user_id"].(float64))
 		role = claims["role"].(string)
 		name = claims["name"].(string)
-		return userID, role, name, nil
+		return userID, name, role, nil
 	}
 	return 0, "", "", errors.New("invalid token claims")
 }

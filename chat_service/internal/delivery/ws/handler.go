@@ -36,7 +36,9 @@ func (ws *WsHandler) run() {
 		ws.mu.Lock()
 		for client := range ws.clients {
 			if err := client.WriteJSON(msg); err != nil {
-				client.Close()
+				if err := client.Close(); err != nil {
+					log.Printf("Error closing client websocket: %v", err)
+				}
 				delete(ws.clients, client)
 			}
 		}
@@ -71,7 +73,9 @@ func (ws *WsHandler) HandleWS(c *gin.Context) {
 			ws.mu.Lock()
 			delete(ws.clients, conn)
 			ws.mu.Unlock()
-			conn.Close()
+			if err := conn.Close(); err != nil {
+				log.Printf("Error closing connection websocket: %v", err)
+			}
 		}()
 		for {
 

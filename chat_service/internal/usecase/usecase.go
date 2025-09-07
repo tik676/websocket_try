@@ -7,12 +7,11 @@ import (
 )
 
 type UseCase struct {
-	repo      domain.MessageRepository
-	broadcast domain.Broadcaster
+	repo domain.MessageRepository
 }
 
-func NewUseCase(repo domain.MessageRepository, broadcast domain.Broadcaster) *UseCase {
-	return &UseCase{repo: repo, broadcast: broadcast}
+func NewUseCase(repo domain.MessageRepository) *UseCase {
+	return &UseCase{repo: repo}
 }
 
 func (uc *UseCase) SendMessage(msg domain.Message) (domain.Message, error) {

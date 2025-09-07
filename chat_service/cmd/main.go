@@ -27,26 +27,25 @@ func main() {
 
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
-		log.Fatal("Не удалось подключиться к базе данных: ", err)
+		log.Fatal("Failed to connect to the DB: ", err)
 	}
 	if err := db.Ping(); err != nil {
-		log.Fatal("Ошибка ping базы данных: ", err)
+		log.Fatal("Error ping DB: ", err)
 	}
 
-	log.Println("Соединение с базой данных успешно установлено")
+	log.Println("Connection to the DB was successful")
 	repo := infrastructure.NewDBrepo(db)
 	jwtSecret := os.Getenv("JWT_SECRET")
 	tokenManager := infrastructure.NewJWTmaker(jwtSecret)
+	uc := usecase.NewUseCase(repo)
 
 	upgrader := &websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool { return true },
 	}
-	var wsHandler *ws.WsHandler
-	uc := usecase.NewUseCase(repo, nil)
-	wsHandler = ws.NewWsHandler(uc, upgrader)
-	uc = usecase.NewUseCase(repo, wsHandler)
 
-	r := router.SetupRouter(uc, tokenManager)
+	wsHandler := ws.NewWsHandler(uc, upgrader)
+
+	r := router.SetupRouter(uc, tokenManager, wsHandler)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)
