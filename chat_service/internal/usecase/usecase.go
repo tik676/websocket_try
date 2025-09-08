@@ -34,7 +34,7 @@ func (uc *UseCase) SendMessage(msg domain.Message) (domain.Message, error) {
 }
 
 func (uc *UseCase) GetMessages(limit, offset int64) ([]domain.Message, error) {
-	if limit <= 0 {
+	if limit < 0 {
 		limit = 50
 	}
 
@@ -42,7 +42,13 @@ func (uc *UseCase) GetMessages(limit, offset int64) ([]domain.Message, error) {
 		offset = 0
 	}
 
-	return uc.repo.MessageHistory(limit, offset)
+	msgs, err := uc.repo.MessageHistory(limit, offset)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return []domain.Message{}, err
+	}
+
+	return msgs, nil
 }
 
 func (uc *UseCase) DeleteMessage(id int64) error {
