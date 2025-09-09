@@ -16,6 +16,7 @@ func SetupRouter(uc *usecase.UseCase, token *infrastructure.JWTmaker, ws *ws.WsH
 	httpRepo := rest.NewHTTPHandler(uc)
 
 	r.GET("/messages", httpRepo.GetMessages)
+	r.DELETE("/message", httpRepo.DeleteMessage)
 	middleware := middleware.NewMiddleware(token)
 	protected := r.Group("/")
 	protected.Use(middleware.RequireAuth())
