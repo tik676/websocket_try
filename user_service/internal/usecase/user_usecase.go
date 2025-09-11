@@ -18,13 +18,21 @@ func NewUseCase(repo domain.Authorization, token domain.TokenManager) *UseCase {
 	return &UseCase{repo: repo, repoToken: token}
 }
 
-func (u *UseCase) RegisterUser(name, password string) (*domain.User, error) {
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+func (u *UseCase) RegisterUser(input domain.AuthorizationInput) (*domain.User, error) {
+	if input.Name == "" {
+		return nil, errors.New("name is required")
+	}
+
+	if input.Password == "" {
+		return nil, errors.New("password is required")
+	}
+
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 	user, err := u.repo.Register(domain.AuthorizationInput{
-		Name:     name,
+		Name:     input.Name,
 		Password: string(hashPassword),
 	})
 
@@ -35,16 +43,23 @@ func (u *UseCase) RegisterUser(name, password string) (*domain.User, error) {
 	return user, nil
 }
 
-func (u *UseCase) LoginUser(name, password string) (*domain.Token, error) {
+func (u *UseCase) LoginUser(input domain.AuthorizationInput) (*domain.Token, error) {
+	if input.Name == "" {
+		return nil, errors.New("name is required")
+	}
+
+	if input.Password == "" {
+		return nil, errors.New("password is required")
+	}
 	user, err := u.repo.Login(domain.AuthorizationInput{
-		Name:     name,
-		Password: password,
+		Name:     input.Name,
+		Password: input.Password,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password))
 	if err != nil {
 		return nil, errors.New("invalid password")
 	}

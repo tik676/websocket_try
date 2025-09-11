@@ -2,6 +2,8 @@ package domain
 
 import "time"
 
+//go:generate mockgen -source=user.go -destination=mocks/mock_user.go -package=mocks
+
 type User struct {
 	ID           int64     `json:"id"`
 	Name         string    `json:"name"`

@@ -42,7 +42,7 @@ func (h *HTTPHandler) RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	user, err := h.usecase.RegisterUser(userInput.Name, userInput.Password)
+	user, err := h.usecase.RegisterUser(userInput)
 	if err != nil {
 		log.Printf("Registration error: %v", err)
 		c.JSON(500, gin.H{"error": "User already exists"})
@@ -66,7 +66,7 @@ func (h *HTTPHandler) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	token, err := h.usecase.LoginUser(userInput.Name, userInput.Password)
+	token, err := h.usecase.LoginUser(userInput)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid password") ||
 			strings.Contains(err.Error(), "user not found") {

@@ -28,7 +28,3 @@ type MessageRepository interface {
 type TokenManager interface {
 	VerifyToken(token string) (userID int64, name, role string, err error)
 }
-
-type Broadcaster interface {
-	Broadcast(msg []byte)
-}
