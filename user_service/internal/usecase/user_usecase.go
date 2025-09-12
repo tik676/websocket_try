@@ -79,7 +79,7 @@ func (u *UseCase) LoginAnonUser() (*domain.Token, error) {
 
 	token, err := u.repoToken.CreateToken(user.ID, user.Name, user.Role)
 	if err != nil {
-		return nil, errors.New("failed to create token")
+		return nil, errors.New("Failed to create token")
 	}
 
 	return token, nil

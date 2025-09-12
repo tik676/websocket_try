@@ -280,3 +280,45 @@ func TestUseCase_LoginUser(t *testing.T) {
 		assert.Equal(t, "failed to create token", err.Error())
 	})
 }
+
+func TestUseCase_LoginAnonUser(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAuth := mocks.NewMockAuthorization(ctrl)
+	mockToken := mocks.NewMockTokenManager(ctrl)
+	usecase := NewUseCase(mockAuth, mockToken)
+
+	t.Run("success", func(t *testing.T) {
+		expectedToken := &domain.Token{
+			AccessToken:  "success_token",
+			RefreshToken: "success_refresh_token",
+			CreatedAt:    time.Now(),
+			ExpiresAt:    time.Now().Add(7 * 24 * time.Hour),
+		}
+
+		mockToken.EXPECT().
+			CreateToken(gomock.Any(), gomock.Any(), gomock.Eq("anon")).
+			Return(expectedToken, nil).
+			Times(1)
+
+		token, err := usecase.LoginAnonUser()
+
+		assert.NoError(t, err)
+		assert.NotNil(t, token)
+		assert.Equal(t, token, expectedToken)
+	})
+
+	t.Run("failed_create_token", func(t *testing.T) {
+		mockToken.EXPECT().
+			CreateToken(gomock.Any(), gomock.Any(), gomock.Eq("anon")).
+			Return(nil, errors.New("Failed work token manager")).
+			Times(1)
+
+		token, err := usecase.LoginAnonUser()
+
+		assert.Error(t, err)
+		assert.Nil(t, token)
+		assert.Equal(t, "Failed to create token", err.Error())
+	})
+}
