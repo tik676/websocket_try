@@ -3,11 +3,13 @@ package usecase
 import (
 	"errors"
 	"testing"
+	"time"
 	"user_service/internal/domain"
 	"user_service/internal/domain/mocks"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestUseCase_RegisterUser(t *testing.T) {
@@ -121,5 +123,160 @@ func TestUseCase_RegisterUser(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, user)
+	})
+}
+
+func TestUseCase_LoginUser(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAuth := mocks.NewMockAuthorization(ctrl)
+	mockToken := mocks.NewMockTokenManager(ctrl)
+	usecase := NewUseCase(mockAuth, mockToken)
+
+	t.Run("success", func(t *testing.T) {
+		password := "password123"
+		hashPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		input := domain.AuthorizationInput{
+			Name:     "testuser",
+			Password: password,
+		}
+
+		userFromdb := &domain.User{
+			ID:           1,
+			Name:         "testuser",
+			Role:         "user",
+			PasswordHash: string(hashPassword),
+		}
+
+		expected := &domain.Token{
+			AccessToken:  "acces_token",
+			RefreshToken: "refresh_token",
+			CreatedAt:    time.Now(),
+			ExpiresAt:    time.Now().Add(7 * 24 * time.Hour),
+		}
+
+		mockAuth.EXPECT().
+			Login(gomock.Eq(input)).
+			Return(userFromdb, nil).
+			Times(1)
+
+		mockToken.EXPECT().
+			CreateToken(userFromdb.ID, userFromdb.Name, userFromdb.Role).
+			Return(expected, nil).
+			Times(1)
+
+		token, err := usecase.LoginUser(input)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, token)
+		assert.Equal(t, expected.AccessToken, token.AccessToken)
+		assert.Equal(t, expected.RefreshToken, token.RefreshToken)
+	})
+
+	t.Run("empty_name", func(t *testing.T) {
+		input := domain.AuthorizationInput{
+			Name:     "",
+			Password: "password123",
+		}
+
+		token, err := usecase.LoginUser(input)
+
+		assert.Error(t, err)
+		assert.Nil(t, token)
+
+	})
+
+	t.Run("empty_password", func(t *testing.T) {
+		input := domain.AuthorizationInput{
+			Name:     "testuser",
+			Password: "",
+		}
+
+		token, err := usecase.LoginUser(input)
+
+		assert.Error(t, err)
+		assert.Nil(t, token)
+	})
+
+	t.Run("user_not_found", func(t *testing.T) {
+		input := domain.AuthorizationInput{
+			Name:     "testuser",
+			Password: "password123",
+		}
+
+		mockAuth.EXPECT().
+			Login(gomock.Eq(input)).
+			Return(nil, errors.New("user not found")).
+			Times(1)
+
+		token, err := usecase.LoginUser(input)
+
+		assert.Error(t, err)
+		assert.Nil(t, token)
+		assert.Contains(t, err.Error(), "user not found")
+	})
+
+	t.Run("invalid_password", func(t *testing.T) {
+		wrondPassword := "wrong_pass"
+		correctPassword := "correct_pass"
+
+		hashPassword, _ := bcrypt.GenerateFromPassword([]byte(correctPassword), bcrypt.DefaultCost)
+
+		input := domain.AuthorizationInput{
+			Name:     "testuser",
+			Password: wrondPassword,
+		}
+
+		userFromdb := &domain.User{
+			ID:           1,
+			Name:         "testuser",
+			Role:         "user",
+			PasswordHash: string(hashPassword),
+		}
+
+		mockAuth.EXPECT().
+			Login(gomock.Eq(input)).
+			Return(userFromdb, nil).
+			Times(1)
+
+		token, err := usecase.LoginUser(input)
+
+		assert.Error(t, err)
+		assert.Nil(t, token)
+		assert.Equal(t, "invalid password", err.Error())
+	})
+
+	t.Run("token_creation_failed", func(t *testing.T) {
+		password := "password123"
+		hashPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+		input := domain.AuthorizationInput{
+			Name:     "testuser",
+			Password: password,
+		}
+
+		userFromdb := &domain.User{
+			ID:           1,
+			Name:         "testuser",
+			Role:         "user",
+			PasswordHash: string(hashPassword),
+		}
+
+		mockAuth.EXPECT().
+			Login(gomock.Eq(input)).
+			Return(userFromdb, nil).
+			Times(1)
+
+		mockToken.EXPECT().
+			CreateToken(userFromdb.ID, userFromdb.Name, userFromdb.Role).
+			Return(nil, errors.New("token service unavailable")).
+			Times(1)
+
+		token, err := usecase.LoginUser(input)
+
+		assert.Error(t, err)
+		assert.Nil(t, token)
+		assert.Equal(t, "failed to create token", err.Error())
 	})
 }

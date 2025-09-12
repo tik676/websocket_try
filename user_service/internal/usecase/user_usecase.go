@@ -28,13 +28,11 @@ func (u *UseCase) RegisterUser(input domain.AuthorizationInput) (*domain.User, e
 	}
 
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	input.Password = string(hashPassword)
 	if err != nil {
 		return nil, err
 	}
-	user, err := u.repo.Register(domain.AuthorizationInput{
-		Name:     input.Name,
-		Password: string(hashPassword),
-	})
+	user, err := u.repo.Register(input)
 
 	if err != nil {
 		return nil, err
@@ -51,10 +49,7 @@ func (u *UseCase) LoginUser(input domain.AuthorizationInput) (*domain.Token, err
 	if input.Password == "" {
 		return nil, errors.New("password is required")
 	}
-	user, err := u.repo.Login(domain.AuthorizationInput{
-		Name:     input.Name,
-		Password: input.Password,
-	})
+	user, err := u.repo.Login(input)
 	if err != nil {
 		return nil, err
 	}
