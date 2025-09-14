@@ -134,7 +134,7 @@ func (j *JWTMaker) RefreshAccessToken(refreshToken string) (*domain.Token, error
 		AccessToken:  newAccessToken,
 		RefreshToken: refreshToken,
 		CreatedAt:    now,
-		ExpiresAt:    time.Now().Add(7 * 24 * time.Hour),
+		ExpiresAt:    accessExpiresAt,
 	}, nil
 }
 

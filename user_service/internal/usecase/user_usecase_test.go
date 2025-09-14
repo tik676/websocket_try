@@ -322,3 +322,98 @@ func TestUseCase_LoginAnonUser(t *testing.T) {
 		assert.Equal(t, "Failed to create token", err.Error())
 	})
 }
+
+func TestUseCase_RefreshToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAuth := mocks.NewMockAuthorization(ctrl)
+	mockToken := mocks.NewMockTokenManager(ctrl)
+	usecase := NewUseCase(mockAuth, mockToken)
+
+	t.Run("success", func(t *testing.T) {
+		refreshToken := "refreshToken_Cool"
+
+		expected := &domain.Token{
+			AccessToken:  "NewAccesToken",
+			RefreshToken: refreshToken,
+		}
+
+		mockToken.EXPECT().
+			RefreshAccessToken(gomock.Eq(refreshToken)).
+			Return(expected, nil).
+			Times(1)
+
+		token, err := usecase.RefreshToken(refreshToken)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, token)
+		assert.Equal(t, token.RefreshToken, refreshToken)
+	})
+
+	t.Run("repository_error", func(t *testing.T) {
+		refreshToken := "invalid_token"
+
+		mockToken.EXPECT().
+			RefreshAccessToken(gomock.Eq(refreshToken)).
+			Return(nil, errors.New("database error")).
+			Times(1)
+
+		token, err := usecase.RefreshToken(refreshToken)
+
+		assert.Error(t, err)
+		assert.Nil(t, token)
+		assert.Equal(t, "refresh token not found", err.Error())
+	})
+
+	t.Run("empte_refreshToken", func(t *testing.T) {
+		token, err := usecase.RefreshToken("")
+
+		assert.Error(t, err)
+		assert.Nil(t, token)
+		assert.Equal(t, "refresh token is required", err.Error())
+	})
+}
+
+func TestUseCase_LogoutUser(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAuth := mocks.NewMockAuthorization(ctrl)
+	mockToken := mocks.NewMockTokenManager(ctrl)
+	usecase := NewUseCase(mockAuth, mockToken)
+
+	t.Run("success", func(t *testing.T) {
+		refreshToken := "refreshToken_Cool"
+
+		mockToken.EXPECT().
+			RevokeRefreshToken(gomock.Eq(refreshToken)).
+			Return(nil).
+			Times(1)
+
+		err := usecase.LogoutUser(refreshToken)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("repository_error", func(t *testing.T) {
+		refershToken := "invalid_token"
+
+		mockToken.EXPECT().
+			RevokeRefreshToken(refershToken).
+			Return(errors.New("database error")).
+			Times(1)
+
+		err := usecase.LogoutUser(refershToken)
+
+		assert.Error(t, err)
+		assert.Equal(t, "refresh token not found", err.Error())
+	})
+
+	t.Run("empty_refresh_Token", func(t *testing.T) {
+		err := usecase.LogoutUser("")
+
+		assert.Error(t, err)
+		assert.Equal(t, "refresh token is required", err.Error())
+	})
+}
