@@ -18,7 +18,8 @@ func TestUseCase_RegisterUser(t *testing.T) {
 
 	mockAuth := mocks.NewMockAuthorization(ctrl)
 	mockToken := mocks.NewMockTokenManager(ctrl)
-	usecase := NewUseCase(mockAuth, mockToken)
+	mockProducer := mocks.NewMockKafkaProducer(ctrl)
+	usecase := NewUseCase(mockAuth, mockToken, mockProducer)
 
 	t.Run("succes", func(t *testing.T) {
 		input := domain.AuthorizationInput{
@@ -36,6 +37,11 @@ func TestUseCase_RegisterUser(t *testing.T) {
 			Register(gomock.Any()).
 			Return(expectedUser, nil).
 			Times(1)
+
+		mockProducer.EXPECT().
+			SendUserRegistered(gomock.Any(), gomock.Eq(expectedUser.ID), gomock.Eq(expectedUser.Name)).
+			Return(nil).
+			AnyTimes()
 
 		user, err := usecase.RegisterUser(input)
 		assert.NoError(t, err)
@@ -58,6 +64,9 @@ func TestUseCase_RegisterUser(t *testing.T) {
 				return &domain.User{ID: 1, Name: regInput.Name, Role: "user"}, nil
 			}).
 			Times(1)
+
+		mockProducer.EXPECT().
+			SendUserRegistered(gomock.Any(), gomock.Any(), gomock.Eq(input.Name))
 
 		_, err := usecase.RegisterUser(input)
 
@@ -132,7 +141,8 @@ func TestUseCase_LoginUser(t *testing.T) {
 
 	mockAuth := mocks.NewMockAuthorization(ctrl)
 	mockToken := mocks.NewMockTokenManager(ctrl)
-	usecase := NewUseCase(mockAuth, mockToken)
+	mockProducer := mocks.NewMockKafkaProducer(ctrl)
+	usecase := NewUseCase(mockAuth, mockToken, mockProducer)
 
 	t.Run("success", func(t *testing.T) {
 		password := "password123"
@@ -150,7 +160,7 @@ func TestUseCase_LoginUser(t *testing.T) {
 		}
 
 		expected := &domain.Token{
-			AccessToken:  "acces_token",
+			AccessToken:  "access_token",
 			RefreshToken: "refresh_token",
 			CreatedAt:    time.Now(),
 			ExpiresAt:    time.Now().Add(7 * 24 * time.Hour),
@@ -164,6 +174,11 @@ func TestUseCase_LoginUser(t *testing.T) {
 		mockToken.EXPECT().
 			CreateToken(userFromdb.ID, userFromdb.Name, userFromdb.Role).
 			Return(expected, nil).
+			Times(1)
+
+		mockProducer.EXPECT().
+			SendUserLoggedIn(gomock.Any(), gomock.Eq(userFromdb.ID), gomock.Eq(userFromdb.Name)).
+			Return(nil).
 			Times(1)
 
 		token, err := usecase.LoginUser(input)
@@ -287,7 +302,8 @@ func TestUseCase_LoginAnonUser(t *testing.T) {
 
 	mockAuth := mocks.NewMockAuthorization(ctrl)
 	mockToken := mocks.NewMockTokenManager(ctrl)
-	usecase := NewUseCase(mockAuth, mockToken)
+	mockProducer := mocks.NewMockKafkaProducer(ctrl)
+	usecase := NewUseCase(mockAuth, mockToken, mockProducer)
 
 	t.Run("success", func(t *testing.T) {
 		expectedToken := &domain.Token{
@@ -301,6 +317,9 @@ func TestUseCase_LoginAnonUser(t *testing.T) {
 			CreateToken(gomock.Any(), gomock.Any(), gomock.Eq("anon")).
 			Return(expectedToken, nil).
 			Times(1)
+
+		mockProducer.EXPECT().
+			SendUserLoggedIn(gomock.Any(), gomock.Any(), gomock.Any())
 
 		token, err := usecase.LoginAnonUser()
 
@@ -329,7 +348,8 @@ func TestUseCase_RefreshToken(t *testing.T) {
 
 	mockAuth := mocks.NewMockAuthorization(ctrl)
 	mockToken := mocks.NewMockTokenManager(ctrl)
-	usecase := NewUseCase(mockAuth, mockToken)
+	mockProducer := mocks.NewMockKafkaProducer(ctrl)
+	usecase := NewUseCase(mockAuth, mockToken, mockProducer)
 
 	t.Run("success", func(t *testing.T) {
 		refreshToken := "refreshToken_Cool"
@@ -381,7 +401,8 @@ func TestUseCase_LogoutUser(t *testing.T) {
 
 	mockAuth := mocks.NewMockAuthorization(ctrl)
 	mockToken := mocks.NewMockTokenManager(ctrl)
-	usecase := NewUseCase(mockAuth, mockToken)
+	mockProducer := mocks.NewMockKafkaProducer(ctrl)
+	usecase := NewUseCase(mockAuth, mockToken, mockProducer)
 
 	t.Run("success", func(t *testing.T) {
 		refreshToken := "refreshToken_Cool"

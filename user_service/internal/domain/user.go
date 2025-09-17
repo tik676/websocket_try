@@ -1,8 +1,11 @@
 package domain
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
-//go:generate mockgen -source=user.go -destination=mocks/mock_user.go -package=mocks
+//go:generate mockgen -source=user.go -destination=mocks/user.go -package=mocksauth
 
 type User struct {
 	ID           int64     `json:"id"`
@@ -24,6 +27,12 @@ type Token struct {
 	ExpiresAt    time.Time `json:"expires_at"`
 }
 
+type UserActionEvent struct {
+	UserID    int64     `json:"user_id"`
+	UserName  string    `json:"user_name"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
 type Authorization interface {
 	Register(input AuthorizationInput) (*User, error)
 	Login(input AuthorizationInput) (*User, error)
@@ -37,4 +46,10 @@ type TokenManager interface {
 	RefreshAccessToken(refreshToken string) (*Token, error)
 	VerifyRefreshToken(refreshToken string) (int64, error)
 	RevokeRefreshToken(refreshToken string) error
+}
+
+type KafkaProducer interface {
+	SendUserRegistered(ctx context.Context, userID int64, name string) error
+	SendUserLoggedIn(ctx context.Context, userID int64, name string) error
+	Close() error
 }

@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type User struct {
 	ID     int64  `json:"id"`
@@ -17,6 +20,17 @@ type Message struct {
 	CreatedAt time.Time `json:"created_at"`
 	Role      string    `json:"role"`
 	IsAnon    bool      `json:"is_anon"`
+}
+
+type KafkaProducerDeleteEvent struct {
+	MessageID int64     `json:"id"`
+	UserID    int64     `json:"user_id"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type ProducerEvents interface {
+	SendDeleteMessageEvent(ctx context.Context, userID, message int64) error
+	Close() error
 }
 
 type MessageRepository interface {

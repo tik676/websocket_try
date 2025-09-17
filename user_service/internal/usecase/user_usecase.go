@@ -1,21 +1,28 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand/v2"
+	"time"
 	"user_service/internal/domain"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UseCase struct {
-	repo      domain.Authorization
-	repoToken domain.TokenManager
+	repo          domain.Authorization
+	repoToken     domain.TokenManager
+	eventProducer domain.KafkaProducer
 }
 
-func NewUseCase(repo domain.Authorization, token domain.TokenManager) *UseCase {
-	return &UseCase{repo: repo, repoToken: token}
+func NewUseCase(repo domain.Authorization, token domain.TokenManager, repoEventProducer domain.KafkaProducer) *UseCase {
+	return &UseCase{repo: repo,
+		repoToken:     token,
+		eventProducer: repoEventProducer,
+	}
 }
 
 func (u *UseCase) RegisterUser(input domain.AuthorizationInput) (*domain.User, error) {
@@ -36,6 +43,13 @@ func (u *UseCase) RegisterUser(input domain.AuthorizationInput) (*domain.User, e
 
 	if err != nil {
 		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	if err := u.eventProducer.SendUserRegistered(ctx, user.ID, user.Name); err != nil {
+		log.Printf("Failed to send Kafka event: %v", err)
 	}
 
 	return user, nil
@@ -64,6 +78,13 @@ func (u *UseCase) LoginUser(input domain.AuthorizationInput) (*domain.Token, err
 		return nil, errors.New("failed to create token")
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	if err := u.eventProducer.SendUserLoggedIn(ctx, user.ID, user.Name); err != nil {
+		log.Printf("Failed to send Kafka event: %v", err)
+	}
+
 	return token, nil
 }
 
@@ -80,6 +101,13 @@ func (u *UseCase) LoginAnonUser() (*domain.Token, error) {
 	token, err := u.repoToken.CreateToken(user.ID, user.Name, user.Role)
 	if err != nil {
 		return nil, errors.New("Failed to create token")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	if err := u.eventProducer.SendUserLoggedIn(ctx, user.ID, user.Name); err != nil {
+		log.Printf("Failed to send Kafka event: %v", err)
 	}
 
 	return token, nil

@@ -103,10 +103,10 @@ func (j *JWTMaker) RefreshAccessToken(refreshToken string) (*domain.Token, error
 		return nil, errors.New("invalid refresh token")
 	}
 
-	var role string
+	var role, name string
 
-	userQuery := `SELECT role FROM users WHERE id = $1`
-	err = j.DB.QueryRow(userQuery, userID).Scan(&role)
+	userQuery := `SELECT role,name FROM users WHERE id = $1`
+	err = j.DB.QueryRow(userQuery, userID).Scan(&role, &name)
 	if err != nil {
 		log.Printf("User not found: %v", err)
 		return nil, errors.New("user not found")
@@ -118,6 +118,7 @@ func (j *JWTMaker) RefreshAccessToken(refreshToken string) (*domain.Token, error
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"role":    role,
+		"name":    name,
 		"exp":     accessExpiresAt.Unix(),
 		"iat":     now.Unix(),
 		"iss":     "user-service",

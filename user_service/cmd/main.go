@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 	"user_service/internal/delivery/rest"
 	"user_service/internal/infrastructure"
@@ -48,9 +49,23 @@ func main() {
 		time.Sleep(2 * time.Second)
 	}
 
+	brokersStr := os.Getenv("KAFKA_BROKERS")
+	if brokersStr == "" {
+		brokersStr = "localhost:9092"
+	}
+
+	brokers := strings.Split(brokersStr, ",")
+
+	topic := os.Getenv("KAFKA_TOPIC")
+	if topic == "" {
+		topic = "user-events"
+	}
+
+	producer := infrastructure.NewKafkaProducer(brokers, topic)
+	defer producer.Close()
 	repo := infrastructure.NewDB(db)
 	jwtKey := infrastructure.NewJWTMaker(os.Getenv("JWT_SECRET"), db)
-	usecase := usecase.NewUseCase(repo, jwtKey)
+	usecase := usecase.NewUseCase(repo, jwtKey, producer)
 
 	router := rest.SetupRouter(usecase, jwtKey)
 
