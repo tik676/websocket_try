@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+//go:generate mockgen -source=dto.go -destination=mocks/dto.go -package=mockschat
+
 type User struct {
 	ID     int64  `json:"id"`
 	Name   string `json:"name"`
