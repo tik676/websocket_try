@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -34,10 +35,24 @@ func main() {
 	}
 
 	log.Println("Connection to the DB was successful")
+
+	brokersStr := os.Getenv("KAFKA_BROKERS")
+	if brokersStr == "" {
+		brokersStr = "localhost:9092"
+	}
+
+	brokers := strings.Split(brokersStr, ",")
+
+	topic := os.Getenv("KAFKA_TOPIC")
+	if topic == "" {
+		topic = "user-events"
+	}
+
+	producer := infrastructure.NewKafkaProducer(brokers, topic)
 	repo := infrastructure.NewDBrepo(db)
 	jwtSecret := os.Getenv("JWT_SECRET")
 	tokenManager := infrastructure.NewJWTmaker(jwtSecret)
-	uc := usecase.NewUseCase(repo)
+	uc := usecase.NewUseCase(repo, producer)
 
 	upgrader := &websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool { return true },

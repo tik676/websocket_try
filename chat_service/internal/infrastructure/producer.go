@@ -13,7 +13,13 @@ type producer struct {
 	writer *kafka.Writer
 }
 
-func NewKafkaProducer(writer *kafka.Writer) *producer {
+func NewKafkaProducer(brokers []string, topic string) *producer {
+	writer := &kafka.Writer{
+		Addr:     kafka.TCP(brokers...),
+		Topic:    topic,
+		Balancer: &kafka.LeastBytes{},
+	}
+
 	return &producer{writer: writer}
 }
 

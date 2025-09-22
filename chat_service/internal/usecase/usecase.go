@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"chat_service/internal/domain"
+	"context"
 	"fmt"
 	"log"
+	"time"
 )
 
 type UseCase struct {
@@ -29,6 +31,7 @@ func (uc *UseCase) SendMessage(msg domain.Message) (domain.Message, error) {
 	saveMsg, err := uc.repo.SaveMessage(msg)
 	if err != nil {
 		log.Printf("Failed to send message:%v", err)
+		return domain.Message{}, err
 	}
 
 	return saveMsg, nil
@@ -52,6 +55,15 @@ func (uc *UseCase) GetMessages(limit, offset int64) ([]domain.Message, error) {
 	return msgs, nil
 }
 
-func (uc *UseCase) DeleteMessage(id int64) error {
+func (uc *UseCase) DeleteMessage(id int64, userID int64) error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := uc.producer.SendDeleteMessageEvent(ctx, userID, id)
+	if err != nil {
+		return err
+	}
+
 	return uc.repo.DeleteMessage(id)
 }
