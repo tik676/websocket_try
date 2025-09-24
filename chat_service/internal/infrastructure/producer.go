@@ -9,21 +9,21 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type producer struct {
+type Producer struct {
 	writer *kafka.Writer
 }
 
-func NewKafkaProducer(brokers []string, topic string) *producer {
+func NewKafkaProducer(brokers []string, topic string) *Producer {
 	writer := &kafka.Writer{
 		Addr:     kafka.TCP(brokers...),
 		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 	}
 
-	return &producer{writer: writer}
+	return &Producer{writer: writer}
 }
 
-func (p *producer) SendDeleteMessageEvent(ctx context.Context, userID, messageID int64) error {
+func (p *Producer) SendDeleteMessageEvent(ctx context.Context, userID, messageID int64) error {
 	event := domain.KafkaProducerDeleteEvent{
 		UserID:    userID,
 		MessageID: messageID,
@@ -33,7 +33,7 @@ func (p *producer) SendDeleteMessageEvent(ctx context.Context, userID, messageID
 	return p.SendEvent(ctx, "message-deleted", event)
 }
 
-func (p *producer) SendEvent(ctx context.Context, eventType string, event interface{}) error {
+func (p *Producer) SendEvent(ctx context.Context, eventType string, event interface{}) error {
 	data, err := json.Marshal(event)
 	if err != nil {
 		return err
@@ -48,6 +48,6 @@ func (p *producer) SendEvent(ctx context.Context, eventType string, event interf
 	return p.writer.WriteMessages(ctx, message)
 }
 
-func (p *producer) Close() error {
+func (p *Producer) Close() error {
 	return p.writer.Close()
 }

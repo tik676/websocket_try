@@ -62,7 +62,11 @@ func main() {
 	}
 
 	producer := infrastructure.NewKafkaProducer(brokers, topic)
-	defer producer.Close()
+	defer func() {
+		if err := producer.Close(); err != nil {
+			log.Printf("Error closing Kafka producer: %v", err)
+		}
+	}()
 	repo := infrastructure.NewDB(db)
 	jwtKey := infrastructure.NewJWTMaker(os.Getenv("JWT_SECRET"), db)
 	usecase := usecase.NewUseCase(repo, jwtKey, producer)

@@ -1,6 +1,6 @@
 module chat_service
 
-go 1.24.7
+go 1.24.6
 
 require (
 	github.com/gin-gonic/gin v1.10.1

@@ -49,6 +49,8 @@ func main() {
 	}
 
 	producer := infrastructure.NewKafkaProducer(brokers, topic)
+	defer closeProducerWithLogging(producer)
+
 	repo := infrastructure.NewDBrepo(db)
 	jwtSecret := os.Getenv("JWT_SECRET")
 	tokenManager := infrastructure.NewJWTmaker(jwtSecret)
@@ -64,5 +66,11 @@ func main() {
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func closeProducerWithLogging(p *infrastructure.Producer) {
+	if err := p.Close(); err != nil {
+		log.Printf("Error closing Kafka producer: %v", err)
 	}
 }
