@@ -61,6 +61,49 @@ services:
     networks:
       - user_network 
 
+  create-kafka-topic:
+   image: confluentinc/cp-kafka:7.6.0
+   depends_on:
+     kafka1:
+      condition: service_started
+     kafka2: 
+      condition: service_started
+   command: [
+    "sh", "-c",
+    "echo 'Waiting 30 seconds for Kafka to start...' && 
+     sleep 30 && 
+     echo 'Creating topic user-events...' && 
+     kafka-topics --bootstrap-server kafka1:29092,kafka2:29093 --create --topic user-events --partitions 3 --replication-factor 2 --if-not-exists && 
+     echo 'Topic created successfully'"
+   ]
+   restart: "no"
+   networks: 
+    - user_network
+  
+  notification-service:
+   build:
+    context: ./notification-service
+    dockerfile: Dockerfile
+   environment:
+    KAFKA_BROKERS: "kafka1:29092,kafka2:29093"
+    KAFKA_TOPIC: "user-events"
+    KAFKA_GROUP_ID: "notification-consumer"
+    LOG_PATH: "/app/logs"
+   volumes:
+    - ./notification-service/logs:/app/logs
+   depends_on:
+    zookeeper:
+      condition: service_started
+    kafka1:
+      condition: service_started
+    kafka2:
+      condition: service_started
+    create-kafka-topic:       
+        condition: service_completed_successfully
+   restart: unless-stopped
+   networks:
+      - user_network
+
   zookeeper:
    image: confluentinc/cp-zookeeper:latest
    environment:
@@ -69,7 +112,7 @@ services:
    ports:
    - "2181:2181"
    networks:
-   - "user_network"
+   - user_network
 
   kafka1:
    image: confluentinc/cp-kafka:7.6.0
@@ -83,8 +126,16 @@ services:
     KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:9092
     KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+    KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 50
+    KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+    KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+    KAFKA_MIN_INSYNC_REPLICAS: 1
+    KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
    networks:
-    - "user_network"
+    - user_network
 
   kafka2:
    image: confluentinc/cp-kafka:7.6.0
@@ -92,14 +143,22 @@ services:
    ports:
     - "9093:9093"
    environment:
-      KAFKA_BROKER_ID: 2
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:29093,PLAINTEXT_HOST://localhost:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9093
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    KAFKA_BROKER_ID: 2
+    KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+    KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:29093,PLAINTEXT_HOST://localhost:9093
+    KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9093
+    KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+    KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 50
+    KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+    KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+    KAFKA_MIN_INSYNC_REPLICAS: 1
+    KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
    networks:
-      - user_network
+    - user_network
  
   db-chatservice:
     image: postgres:15-alpine

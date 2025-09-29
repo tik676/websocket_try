@@ -124,14 +124,6 @@ func TestHTTPHandler(t *testing.T) {
 	})
 
 	t.Run("delete_message_invalid_data", func(t *testing.T) {
-		mockProducer.EXPECT().
-			SendDeleteMessageEvent(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil).
-			AnyTimes()
-		mockRepo.EXPECT().
-			DeleteMessage(gomock.Any()).
-			Return(nil).
-			AnyTimes()
 
 		req := httptest.NewRequest("DELETE", "/messages", nil)
 		req.Header.Set("Content-Type", "application/json")

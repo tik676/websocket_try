@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-var idNotification int64
-
 type NotificationProcessor struct {
 	fileRepo  repositories.FileRepository
 	idCounter int64
@@ -27,7 +25,7 @@ func (np *NotificationProcessor) generateID() int64 {
 	return atomic.AddInt64(&np.idCounter, 1)
 }
 
-func (np *NotificationProcessor) ProcessMessage(msg []byte, topic string) error {
+func (np *NotificationProcessor) ProcessMessage(ctx context.Context, msg []byte, topic string) error {
 	if len(msg) == 0 {
 		return errors.New("empty message")
 	}
@@ -39,5 +37,5 @@ func (np *NotificationProcessor) ProcessMessage(msg []byte, topic string) error 
 		Timestamp: time.Now(),
 	}
 
-	return np.fileRepo.SaveMessage(context.Background(), notification)
+	return np.fileRepo.SaveMessage(ctx, notification)
 }

@@ -8,3 +8,15 @@ test.integration:
 	cd user_service && DB_HOST=localhost DB_PORT=5433 DB_USER=postgres DB_PASSWORD=postgres DB_NAME=dbName \
 		go test -tags=integration -v ./tests/integration
 	docker compose -f docker-compose.test.yml down -v
+
+build:
+	docker compose up --build
+
+down:
+	docker compose down
+
+start:
+	docker compose start
+
+stop:
+	docker compose stop
