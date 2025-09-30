@@ -91,7 +91,7 @@ make build
 ### Chat Service
 - `GET /messages?limit=10&offset=0` — история сообщений  
 - `DELETE /message` — удалить сообщение  
-- `GET /ws?token=`Ваш токен`` — подключение к WebSocket (авторизация обязательна,анонимный пользователь тоже получает токен)  
+- `GET /ws?token="Ваш токен"` — подключение к WebSocket (авторизация обязательна,анонимный пользователь тоже получает токен)  
 
 ### Notification Service
 - Консьюмер Kafka, пишет логи в `/logs`  
