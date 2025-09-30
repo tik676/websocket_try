@@ -9,6 +9,15 @@ test.integration:
 		go test -tags=integration -v ./tests/integration
 	docker compose -f docker-compose.test.yml down -v
 
+linter.notification:
+	cd notification-service && golangci-lint run
+
+linter.chat:
+	cd chat_service && golangci-lint run
+
+linter.user:
+	cd user_service && golangci-lint run
+
 build:
 	docker compose up --build
 

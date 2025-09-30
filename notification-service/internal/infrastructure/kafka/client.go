@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"notification-service/internal/usecase"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -28,17 +29,30 @@ func NewConsumer(processor *usecase.NotificationProcessor, brokers []string, top
 }
 
 func (c *Consumer) Start(ctx context.Context) {
-	defer c.reader.Close()
-	for {
-		msg, err := c.reader.ReadMessage(ctx)
-		if err != nil {
-			log.Printf("Error reading message: %v", err)
-			continue
+	defer func() {
+		if err := c.reader.Close(); err != nil {
+			log.Printf("Failed to close kafka reader %s", err)
 		}
+	}()
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("Consumer shutdown")
+			return
+		default:
+			msgCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+			msg, err := c.reader.ReadMessage(msgCtx)
+			cancel()
+			if err != nil {
+				log.Printf("Error reading message: %v", err)
+				continue
+			}
 
-		err = c.processor.ProcessMessage(ctx, msg.Value, msg.Topic)
-		if err != nil {
-			log.Printf("Error processing message: %v", err)
+			eventType := string(msg.Key)
+			err = c.processor.ProcessMessage(ctx, eventType, msg.Value, msg.Topic)
+			if err != nil {
+				log.Printf("Error processing message: %v", err)
+			}
 		}
 	}
 }

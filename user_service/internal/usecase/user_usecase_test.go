@@ -386,7 +386,7 @@ func TestUseCase_RefreshToken(t *testing.T) {
 		assert.Equal(t, "refresh token not found", err.Error())
 	})
 
-	t.Run("empte_refreshToken", func(t *testing.T) {
+	t.Run("empty_refreshToken", func(t *testing.T) {
 		token, err := usecase.RefreshToken("")
 
 		assert.Error(t, err)
@@ -418,14 +418,14 @@ func TestUseCase_LogoutUser(t *testing.T) {
 	})
 
 	t.Run("repository_error", func(t *testing.T) {
-		refershToken := "invalid_token"
+		refreshToken := "invalid_token"
 
 		mockToken.EXPECT().
-			RevokeRefreshToken(refershToken).
+			RevokeRefreshToken(refreshToken).
 			Return(errors.New("database error")).
 			Times(1)
 
-		err := usecase.LogoutUser(refershToken)
+		err := usecase.LogoutUser(refreshToken)
 
 		assert.Error(t, err)
 		assert.Equal(t, "refresh token not found", err.Error())

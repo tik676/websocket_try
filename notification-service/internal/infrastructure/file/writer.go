@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"fmt"
+	"log"
 	"notification-service/internal/domain/entities"
 	"os"
 	"path/filepath"
@@ -25,10 +26,11 @@ func (fw *FileWriter) SaveMessage(ctx context.Context, notification *entities.No
 	fileName := fmt.Sprintf("%s_%s.log", notification.TopicName, time.Now().Format("2006-01-02"))
 	filePath := filepath.Join(fw.path, fileName)
 
-	logEntry := fmt.Sprintf("[%s] ID:%d Topic:%s Message:%s\n",
-		notification.Timestamp.Format("2006-01-02"),
+	logEntry := fmt.Sprintf("[%s] ID:%d Topic:%s,EventType:%s Message:%s\n",
+		notification.Timestamp.Format("2006-01-02 15:04:05"),
 		notification.ID,
 		notification.TopicName,
+		notification.EventType,
 		string(notification.Message),
 	)
 
@@ -37,7 +39,11 @@ func (fw *FileWriter) SaveMessage(ctx context.Context, notification *entities.No
 		return fmt.Errorf("failed to open log file: %w", err)
 	}
 
-	defer file.Close()
+	defer func(file *os.File) {
+		if err := file.Close(); err != nil {
+			log.Printf("Failed to close log file: %s", err)
+		}
+	}(file)
 
 	_, err = file.WriteString(logEntry)
 
