@@ -2,3 +2,10 @@
 [2025-09-30 03:43:48] ID:1 Topic:user-events,EventType:user-logged-in Message:{"user_id":2,"user_name":"gggg","timestamp":"2025-09-30T03:43:47.02919675Z"}
 [2025-09-30 03:44:12] ID:2 Topic:user-events,EventType:user-registered Message:{"user_id":7,"user_name":"ggggsss","timestamp":"2025-09-30T03:44:11.700627875Z"}
 [2025-09-30 03:44:22] ID:3 Topic:user-events,EventType:user-logged-in Message:{"user_id":7,"user_name":"ggggsss","timestamp":"2025-09-30T03:44:21.256536164Z"}
+[2025-09-30 04:24:03] ID:1 Topic:user-events,EventType:user-logged-in Message:{"user_id":2,"user_name":"gggg","timestamp":"2025-09-30T04:24:02.288103234Z"}
+[2025-09-30 04:35:42] ID:1 Topic:user-events,EventType:user-logged-in Message:{"user_id":2,"user_name":"gggg","timestamp":"2025-09-30T04:35:41.268973777Z"}
+[2025-09-30 04:35:50] ID:2 Topic:user-events,EventType:user-logged-in Message:{"user_id":8,"user_name":"anon_8171803896176555123","timestamp":"2025-09-30T04:35:49.001679764Z"}
+[2025-09-30 04:39:34] ID:1 Topic:user-events,EventType:user-logged-in Message:{"user_id":9,"user_name":"anon_852188375689816155","timestamp":"2025-09-30T04:39:33.086098298Z"}
+[2025-09-30 04:39:58] ID:2 Topic:user-events,EventType:user-logged-in Message:{"user_id":10,"user_name":"anon_6152106470283866278","timestamp":"2025-09-30T04:39:57.332196321Z"}
+[2025-09-30 04:55:08] ID:1 Topic:user-events,EventType:user-logged-in Message:{"user_id":11,"user_name":"anon_2660507341962602340","timestamp":"2025-09-30T04:55:07.36733275Z"}
+[2025-09-30 04:55:31] ID:2 Topic:user-events,EventType:user-logged-in Message:{"user_id":7,"user_name":"ggggsss","timestamp":"2025-09-30T04:55:30.016356281Z"}

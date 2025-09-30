@@ -33,6 +33,9 @@ func (u *UseCase) RegisterUser(input domain.AuthorizationInput) (*domain.User, e
 	if input.Password == "" {
 		return nil, errors.New("password is required")
 	}
+	if input.Role == "" {
+		input.Role = "user"
+	}
 
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	input.Password = string(hashPassword)
@@ -92,13 +95,18 @@ func (u *UseCase) LoginAnonUser() (*domain.Token, error) {
 	anonID := rand.Int64()
 	anonName := fmt.Sprintf("anon_%v", anonID)
 
-	user := &domain.User{
-		ID:   anonID,
-		Name: anonName,
-		Role: "anon",
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(anonName), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	token, err := u.repoToken.CreateToken(user.ID, user.Name, user.Role)
+	user, err := u.repo.Register(domain.AuthorizationInput{
+		Name:     anonName,
+		Password: string(hashedPassword),
+		Role:     "anon",
+	})
+
+	token, err := u.repoToken.CreateToken(user.ID, user.Name, "anon")
 	if err != nil {
 		return nil, errors.New("failed to create token")
 	}

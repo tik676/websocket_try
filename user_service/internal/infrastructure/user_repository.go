@@ -16,8 +16,8 @@ func NewDB(db *sql.DB) *DB {
 
 func (db *DB) Register(input domain.AuthorizationInput) (*domain.User, error) {
 	var user domain.User
-	query := `INSERT INTO users(name, password_hash) VALUES($1, $2) RETURNING id, name, password_hash, role, registered_at`
-	err := db.DB.QueryRow(query, input.Name, input.Password).Scan(&user.ID, &user.Name, &user.PasswordHash, &user.Role, &user.RegisteredAt)
+	query := `INSERT INTO users(name, password_hash,role) VALUES($1, $2, $3) RETURNING id, name, password_hash, role, registered_at`
+	err := db.DB.QueryRow(query, input.Name, input.Password, input.Role).Scan(&user.ID, &user.Name, &user.PasswordHash, &user.Role, &user.RegisteredAt)
 	if err != nil {
 		log.Printf("error to register user:%v", err)
 		return nil, err

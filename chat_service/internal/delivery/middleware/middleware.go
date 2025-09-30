@@ -30,7 +30,7 @@ func (m *MiddlewareRepo) RequireAuth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		userID, role, name, err := m.repoToken.VerifyToken(tokenString)
+		userID, name, role, err := m.repoToken.VerifyToken(tokenString)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Invalid token"})
 			c.Abort()

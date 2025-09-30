@@ -40,9 +40,18 @@ func (c *Consumer) Start(ctx context.Context) {
 			log.Println("Consumer shutdown")
 			return
 		default:
-			msgCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+			msgCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			msg, err := c.reader.ReadMessage(msgCtx)
 			cancel()
+
+			if err != nil {
+				if err == context.DeadlineExceeded {
+					continue
+				}
+				log.Printf("Error reading message: %v", err)
+				time.Sleep(1 * time.Second)
+				continue
+			}
 			if err != nil {
 				log.Printf("Error reading message: %v", err)
 				continue
